@@ -29,7 +29,7 @@ const questions = [
         correctResponse: "Yes! Plants need sunlight",
         incorrectResponse: "The answer is sunlight"
     },
-    // Extra, more difficult GK questions:
+    // More difficult GK questions:
     {
         question: "6. Which physicist developed the theory of general relativity?",
         answer: "albert einstein",
@@ -58,36 +58,48 @@ const quizDiv = document.getElementById('quiz');
 const nextBtn = document.getElementById('next-btn');
 const resultDiv = document.getElementById('result');
 
-let answered = false;
-
 function showQuestion() {
     quizDiv.innerHTML = `
         <div>${questions[currentQuestion].question}</div>
         <input type="text" id="answer-input" autocomplete="off" autofocus>
         <div id="feedback"></div>
     `;
+    nextBtn.textContent = "Submit";
     nextBtn.disabled = true;
-    answered = false;
+    resultDiv.classList.add('hidden');
 
-    document.getElementById('answer-input').addEventListener('input', function() {
-        // Enable Next button only if something is typed
-        nextBtn.disabled = this.value.trim() === '';
+    const input = document.getElementById('answer-input');
+    input.addEventListener('input', function() {
+        nextBtn.disabled = input.value.trim() === "";
     });
 
-    document.getElementById('answer-input').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter' && !nextBtn.disabled && !answered) {
-            nextBtn.click();
+    input.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter' && !nextBtn.disabled) {
+            handleSubmit();
         }
     });
+
+    nextBtn.onclick = handleSubmit;
 }
 
-function checkAnswer() {
-    if (answered) return; // Prevent double submission
-    answered = true;
-
-    const userAnswer = document.getElementById('answer-input').value.trim().toLowerCase();
-    const correctAnswer = questions[currentQuestion].answer;
+function handleSubmit() {
+    const input = document.getElementById('answer-input');
     const feedback = document.getElementById('feedback');
+
+    // If already answered, proceed to next question
+    if (nextBtn.textContent === "Next" || nextBtn.textContent === "See Result") {
+        currentQuestion++;
+        if (currentQuestion < totalQuestions) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+        return;
+    }
+
+    // First submission: check answer and show feedback
+    const userAnswer = input.value.trim().toLowerCase();
+    const correctAnswer = questions[currentQuestion].answer;
 
     if (userAnswer === correctAnswer) {
         feedback.textContent = questions[currentQuestion].correctResponse;
@@ -97,9 +109,9 @@ function checkAnswer() {
         feedback.textContent = questions[currentQuestion].incorrectResponse;
         feedback.style.color = "red";
     }
-    // Disable input after answering
-    document.getElementById('answer-input').disabled = true;
+    input.disabled = true;
     nextBtn.disabled = false;
+    nextBtn.textContent = currentQuestion < totalQuestions - 1 ? "Next" : "See Result";
 }
 
 function showResult() {
@@ -120,21 +132,6 @@ function showResult() {
     `;
     resultDiv.classList.remove('hidden');
 }
-
-nextBtn.addEventListener('click', function() {
-    if (!answered) {
-        checkAnswer();
-        nextBtn.textContent = currentQuestion < totalQuestions - 1 ? "Next" : "See Result";
-    } else {
-        currentQuestion++;
-        if (currentQuestion < totalQuestions) {
-            showQuestion();
-            nextBtn.textContent = "Next";
-        } else {
-            showResult();
-        }
-    }
-});
 
 window.onload = function() {
     showQuestion();
