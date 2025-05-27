@@ -58,6 +58,8 @@ const quizDiv = document.getElementById('quiz');
 const nextBtn = document.getElementById('next-btn');
 const resultDiv = document.getElementById('result');
 
+let answered = false;
+
 function showQuestion() {
     quizDiv.innerHTML = `
         <div>${questions[currentQuestion].question}</div>
@@ -65,18 +67,27 @@ function showQuestion() {
         <div id="feedback"></div>
     `;
     nextBtn.disabled = true;
+    answered = false;
+
+    document.getElementById('answer-input').addEventListener('input', function() {
+        // Enable Next button only if something is typed
+        nextBtn.disabled = this.value.trim() === '';
+    });
+
+    document.getElementById('answer-input').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter' && !nextBtn.disabled && !answered) {
+            nextBtn.click();
+        }
+    });
 }
 
 function checkAnswer() {
+    if (answered) return; // Prevent double submission
+    answered = true;
+
     const userAnswer = document.getElementById('answer-input').value.trim().toLowerCase();
     const correctAnswer = questions[currentQuestion].answer;
     const feedback = document.getElementById('feedback');
-
-    if (userAnswer === "") {
-        feedback.textContent = "";
-        nextBtn.disabled = true;
-        return;
-    }
 
     if (userAnswer === correctAnswer) {
         feedback.textContent = questions[currentQuestion].correctResponse;
@@ -86,6 +97,8 @@ function checkAnswer() {
         feedback.textContent = questions[currentQuestion].incorrectResponse;
         feedback.style.color = "red";
     }
+    // Disable input after answering
+    document.getElementById('answer-input').disabled = true;
     nextBtn.disabled = false;
 }
 
@@ -108,22 +121,18 @@ function showResult() {
     resultDiv.classList.remove('hidden');
 }
 
-// Event Listeners
-quizDiv.addEventListener('keyup', function(e) {
-    if (e.target.id === 'answer-input') {
-        checkAnswer();
-        if (e.key === 'Enter' && !nextBtn.disabled) {
-            nextBtn.click();
-        }
-    }
-});
-
 nextBtn.addEventListener('click', function() {
-    currentQuestion++;
-    if (currentQuestion < totalQuestions) {
-        showQuestion();
+    if (!answered) {
+        checkAnswer();
+        nextBtn.textContent = currentQuestion < totalQuestions - 1 ? "Next" : "See Result";
     } else {
-        showResult();
+        currentQuestion++;
+        if (currentQuestion < totalQuestions) {
+            showQuestion();
+            nextBtn.textContent = "Next";
+        } else {
+            showResult();
+        }
     }
 });
 
